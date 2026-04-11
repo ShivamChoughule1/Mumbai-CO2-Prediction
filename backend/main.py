@@ -1,18 +1,35 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
+import pandas as pd
 
 app = FastAPI()
 
+# Enable CORS so React can talk to FastAPI
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.get("/")
 def home():
-    return {"message": "Mumbai CO2 Prediction API is Online"}
+    return {"status": "Mumbai CO2 API Online"}
 
-@app.get("/forecast/{area_name}")
-def get_forecast(area_name: str):
+@app.get("/api/data/{area_name}")
+def get_data(area_name: str):
     conn = sqlite3.connect('mumbai_co2.db')
-    cursor = conn.cursor()
-    # Logic to fetch from your SQLite table
-    cursor.execute("SELECT * FROM forecasts WHERE area_name = ?", (area_name,))
-    data = cursor.fetchall()
+    
+    # Get Historical Data
+    hist_df = pd.read_sql(f"SELECT timestamp, co2_level FROM historical_data LIMIT 500", conn)
+    
+    # Get Forecast Data
+    fore_df = pd.read_sql(f"SELECT forecast_date, predicted_value FROM forecasts WHERE area_name = '{area_name}'", conn)
+    
     conn.close()
-    return {"area": area_name, "predictions": data}
+    
+    return {
+        "historical": hist_df.to_dict(orient="records"),
+        "forecast": fore_df.to_dict(orient="records")
+    }
