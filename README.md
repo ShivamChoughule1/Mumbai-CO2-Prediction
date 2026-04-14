@@ -278,7 +278,7 @@ Returns up to 500 historical observations plus every stored forecast for the giv
 - **Varun** — [GitHub](https://github.com/)
 - **Shivam Choughule** — [GitHub](https://github.com/ShivamChoughule1)
 
-Course: **Big Data Analytics**, KJSCE, Semester 2.
+Course: **Big Data Analytics**, KJSCE, Semester 2, Mini-Project.
 
 ---
 
