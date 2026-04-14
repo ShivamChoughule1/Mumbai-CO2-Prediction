@@ -1,166 +1,86 @@
 # Mumbai CO₂ Prediction
 
-An end-to-end Big Data Analytics project that ingests hourly air-quality readings from across Mumbai, cleans them through a PySpark pipeline, forecasts future CO₂ levels with an ARIMA time-series model, and exposes the results through a FastAPI backend and a React dashboard.
+End-to-end Big Data Analytics project that ingests hourly AQI observations for Mumbai (Jan 2024 – Dec 2025), derives CO₂ via the urban proxy formula, forecasts Jan–Mar 2026 with **ARIMA(5, 1, 0)**, and serves the results through a **FastAPI** backend and a **React + Tailwind + Recharts** dashboard.
 
-This project was built for the **Big Data Analytics (BDA)** course, KJSCE — Semester 2.
-
----
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Tech Stack](#tech-stack)
-4. [Project Structure](#project-structure)
-5. [Dataset](#dataset)
-6. [Database Schema](#database-schema)
-7. [Prerequisites](#prerequisites)
-8. [Installation & Setup](#installation--setup)
-9. [Running the Project](#running-the-project)
-10. [API Reference](#api-reference)
-11. [Using the Dashboard](#using-the-dashboard)
-12. [Modeling Details](#modeling-details)
-13. [Troubleshooting](#troubleshooting)
-14. [Contributors](#contributors)
+Built for **Big Data Analytics (BDA)** — KJSCE, Semester 2.
 
 ---
 
-## Overview
-
-Mumbai's rapid urbanisation has made air-quality monitoring a critical civic concern. This project demonstrates how **Big Data tooling** (Apache Spark) can be combined with **classical time-series modeling** (ARIMA) and a **modern web stack** (FastAPI + React) to deliver actionable CO₂ forecasts for specific Mumbai neighbourhoods.
-
-**Key capabilities:**
-
-- Batch-cleans two years of hourly AQI data (2024–2025) across 12 monthly Excel files per year using PySpark.
-- Trains an ARIMA forecasting model on the cleaned series and writes predictions into a portable SQLite database.
-- Serves historical and forecast data through a FastAPI REST endpoint.
-- Visualises trends and 7-day forecasts in a responsive React + Tailwind dashboard.
-
----
-
-## Architecture
+## 1. Architecture
 
 ```
-┌────────────────────┐     ┌────────────────────┐     ┌────────────────────┐
-│  Raw Excel Files   │ ──▶ │  PySpark Cleaner   │ ──▶ │  Cleaned CSV /     │
-│  (data/ folder)    │     │  spark_cleaner.py  │     │  Staging Data      │
-└────────────────────┘     └────────────────────┘     └──────────┬─────────┘
-                                                                  │
-                                                                  ▼
-┌────────────────────┐     ┌────────────────────┐     ┌────────────────────┐
-│  React Dashboard   │ ◀── │  FastAPI Backend   │ ◀── │  SQLite Database   │
-│  (Vite + Tailwind) │     │  /api/data/{area}  │     │  mumbai_co2.db     │
-└────────────────────┘     └────────────────────┘     └──────────▲─────────┘
-                                                                  │
-                                                       ┌──────────┴─────────┐
-                                                       │  ARIMA Forecaster  │
-                                                       │ arima_research.py  │
-                                                       └────────────────────┘
+Raw XLSX (data/)  ──►  PySpark cleaner  ──►  SQLite  ──►  ARIMA model  ──►  SQLite
+                      (unpivot + CO₂ formula)      (historical_data)           (forecasts)
+                                                                                    │
+                                                                                    ▼
+                                            React dashboard  ◄──  FastAPI (/api/forecast/{area})
 ```
 
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Big Data Processing | PySpark 3.5.1 |
-| Modeling | statsmodels (ARIMA), scikit-learn, NumPy, pandas |
-| Storage | SQLite (portable, zero-config) |
-| Backend API | FastAPI 0.110 + Uvicorn + SQLAlchemy |
-| Frontend | React 19, Vite, Tailwind CSS 4 |
-| Language(s) | Python 3.9+, JavaScript (ES2022) |
-
-**Design palette:** Deep Navy `#0a192f` + Electric Blue `#00d4ff` for a clean, technical look.
+CO₂ proxy formula used throughout: **`CO₂ = 415 + (AQI × 0.5)`**
 
 ---
 
-## Project Structure
+## 2. Tech Stack
+
+| Layer | Tools |
+|------|-------|
+| Big Data | PySpark 3.5 |
+| ML / Time-Series | statsmodels (ARIMA), pandas, NumPy, scikit-learn |
+| Storage | SQLite (portable, single file) |
+| Backend API | FastAPI + Uvicorn |
+| Frontend | React 18, Vite, Tailwind CSS 3, Recharts, Axios |
+| Palette | Deep Navy `#0a192f`, Electric Blue `#00d4ff` |
+
+---
+
+## 3. Project Structure
 
 ```
 Mumbai-CO2-Prediction/
-├── data/                         # Raw hourly AQI Excel files (2024–2025)
+├── data/                         # 24 monthly XLSX workbooks (Jan 2024 – Dec 2025)
 ├── big_data_processing/
-│   ├── spark_cleaner.py          # PySpark ETL: outlier removal, imputation
-│   └── schema.sql                # SQLite table definitions
+│   ├── spark_cleaner.py          # Step 2 — PySpark ETL
+│   └── schema.sql                # Step 1 — SQLite schema
 ├── notebooks/
-│   └── arima_research.py         # ARIMA training + forecast generation
+│   └── arima_research.py         # Step 3 — ARIMA(5,1,0) + forecast
 ├── backend/
-│   ├── main.py                   # FastAPI app (REST endpoints + CORS)
-│   ├── database.py               # DB connection helper
-│   └── mumbai_co2.db             # Generated SQLite database
-├── frontend/
-│   ├── src/                      # React components & pages
-│   ├── public/
-│   ├── package.json
+│   ├── main.py                   # Step 4 — FastAPI server
+│   ├── database.py
+│   └── mumbai_co2.db             # Generated SQLite file
+├── frontend/                     # Step 5 — React dashboard
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
 │   ├── tailwind.config.js
-│   └── vite.config.js
-├── requirements.txt              # Unified Python dependencies
+│   ├── postcss.config.js
+│   └── package.json
+├── requirements.txt              # Step 6
 └── README.md
 ```
 
----
-
-## Dataset
-
-- **Source files:** `AQI_hourly_city_level_mumbai_<YYYY>_<Month>_mumbai_<Month>_<YYYY>.xlsx`
-- **Coverage:** January 2024 – December 2025 (24 monthly workbooks)
-- **Granularity:** Hourly pollutant readings at city level
-- **Target variable:** CO₂ concentration (`co2_level`)
-
-The raw workbooks live in [data/](data/) and are read directly by the Spark cleaner.
+All paths inside scripts are **relative** (`../backend/mumbai_co2.db`, `../data`, etc.) — the project runs from a single extracted ZIP.
 
 ---
 
-## Database Schema
+## 4. One-Time Setup
 
-Defined in [big_data_processing/schema.sql](big_data_processing/schema.sql):
-
-| Table | Purpose | Key Columns |
-|-------|---------|-------------|
-| `areas` | Registry of Mumbai localities | `area_id`, `area_name`, `latitude`, `longitude` |
-| `historical_data` | Cleaned hourly observations | `timestamp`, `co2_level` |
-| `forecasts` | ARIMA predictions per area | `area_name`, `forecast_date`, `predicted_value`, `lower_ci`, `upper_ci` |
-
----
-
-## Prerequisites
-
-- **Python** 3.9 or newer
-- **Node.js** 18 or newer (plus npm)
-- **Java 8/11** on `PATH` (required by PySpark)
-- ~500 MB free disk space for the virtual environment and dataset
-
----
-
-## Installation & Setup
-
-Clone the repository and enter the project root:
-
-```bash
-git clone https://github.com/ShivamChoughule1/Mumbai-CO2-Prediction.git
-cd Mumbai-CO2-Prediction
-```
-
-Create and activate a Python virtual environment:
+### 4.1 Python environment
 
 ```bash
 python -m venv venv
 
-# Windows
-venv\Scripts\activate
-
+# Windows (Git Bash / MINGW)
+source venv/Scripts/activate
+# Windows (CMD)
+venv\Scripts\activate.bat
 # macOS / Linux
 source venv/bin/activate
-```
 
-Install Python dependencies:
-
-```bash
 pip install -r requirements.txt
 ```
 
-Install frontend dependencies:
+### 4.2 Frontend dependencies
 
 ```bash
 cd frontend
@@ -168,115 +88,100 @@ npm install
 cd ..
 ```
 
----
-
-## Running the Project
-
-The project runs as **three coordinated processes**. Open three terminals at the project root.
-
-### Terminal 1 — Data Pipeline (one-time / on data refresh)
+### 4.3 Build the database (run once, or whenever data changes)
 
 ```bash
-# 1. Clean raw AQI data with PySpark
+# 1. PySpark ETL: unpivot XLSX → historical_data
 python big_data_processing/spark_cleaner.py
 
-# 2. Train ARIMA and persist forecasts into SQLite
+# 2. Train ARIMA(5,1,0) and populate the forecasts table
 python notebooks/arima_research.py
 ```
 
-This produces `backend/mumbai_co2.db` populated with both `historical_data` and `forecasts`.
+After this step, `backend/mumbai_co2.db` will contain both `historical_data` and `forecasts` tables.
 
-### Terminal 2 — Backend API
+---
+
+## 5. Two-Terminal Run Guide
+
+### 🖥️ Terminal 1 — FastAPI backend
 
 ```bash
+source venv/Scripts/activate      # activate venv (Git Bash on Windows)
 cd backend
 uvicorn main:app --reload
 ```
 
-API available at **http://127.0.0.1:8000**. Interactive Swagger docs at **http://127.0.0.1:8000/docs**.
+Backend live at **http://127.0.0.1:8000** · docs at **http://127.0.0.1:8000/docs**.
 
-### Terminal 3 — Frontend Dashboard
+### 🖥️ Terminal 2 — React dashboard
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Dashboard available at **http://localhost:5173**.
+Open the URL Vite prints (usually **http://localhost:5173**).
 
 ---
 
-## API Reference
+## 6. API
 
-Defined in [backend/main.py](backend/main.py).
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | Health check |
+| `GET` | `/api/areas` | List of areas with forecasts |
+| `GET` | `/api/forecast/{area}` | Combined historical + forecast JSON + peak-next-week summary |
 
-### `GET /`
+Example: `GET /api/forecast/Bandra`
 
-Health-check endpoint.
-
-**Response**
-```json
-{ "status": "Mumbai CO2 API Online" }
-```
-
-### `GET /api/data/{area_name}`
-
-Returns up to 500 historical observations plus every stored forecast for the given area.
-
-**Path parameters**
-
-| Name | Type | Example |
-|------|------|---------|
-| `area_name` | string | `Bandra`, `Kurla`, `Colaba` |
-
-**Response**
 ```json
 {
-  "historical": [
-    { "timestamp": "2024-01-01 00:00:00", "co2_level": 412.5 }
-  ],
-  "forecast": [
-    { "forecast_date": "2026-04-15", "predicted_value": 431.8 }
-  ]
+  "summary": {
+    "area": "Bandra",
+    "history_points": 1000,
+    "forecast_points": 2200,
+    "peak_next_week": { "forecast_date": "2026-01-03 17:00:00", "predicted_value": 468.12, "lower_ci": 455.7, "upper_ci": 480.5 }
+  },
+  "historical": [ { "timestamp": "2024-01-01 00:00:00", "co2_level": 479.5 }, ... ],
+  "forecast":   [ { "forecast_date": "2026-01-01 00:00:00", "predicted_value": 461.2, "lower_ci": 448.1, "upper_ci": 474.3 }, ... ]
 }
 ```
 
 ---
 
-## Using the Dashboard
+## 7. Dashboard Features
 
-1. **Select an area** from the sidebar (e.g., Bandra, Kurla, Colaba).
-2. **Historical View** — inspect cleaned CO₂ trends produced by the Spark pipeline.
-3. **Forecast View** — see the next 7 days of ARIMA predictions with confidence intervals.
-4. Switch areas at any time; the dashboard refetches from `/api/data/{area_name}`.
-
----
-
-## Modeling Details
-
-- **Stationarity check:** Augmented Dickey-Fuller (ADF) test drives the differencing parameter *d*.
-- **Order selection:** ARIMA(*p*, *d*, *q*) tuned via ACF/PACF inspection and AIC comparison.
-- **Forecast horizon:** 7 days (168 hourly steps) with 95 % confidence intervals.
-- **Big Data cleansing:** Spark handles outlier removal (IQR bounds) and null imputation (group-mean) so the series fed into ARIMA is continuous and well-formed.
+- **Sidebar** — switch between Bandra, Kurla, Colaba, Andheri, Dadar, Mumbai Central.
+- **Main chart** — Recharts `LineChart` with historical trend (slate/navy) and 2026 forecast (electric blue).
+- **Summary card** — predicted peak CO₂ for the upcoming 7 days + 95 % CI + model label.
 
 ---
 
-## Troubleshooting
+## 8. Model Notes (ARIMA)
+
+- **Order:** `(p, d, q) = (5, 1, 0)` — 5 autoregressive lags, 1st-order differencing, no moving-average term.
+- **Horizon:** 2200 hours ahead (≈ Jan 01 – early Apr 2026).
+- **Per-area output:** one city-level ARIMA is fit; per-area forecasts are derived by applying a small multiplicative offset per locality (documented in `notebooks/arima_research.py`) since the source dataset is city-level.
+
+---
+
+## 9. Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
-| `JAVA_HOME is not set` when running Spark | Install JDK 8 or 11 and export `JAVA_HOME`. |
-| `ModuleNotFoundError` after activation | Re-run `pip install -r requirements.txt` inside the activated venv. |
-| Frontend shows empty charts | Confirm Terminal 1 finished successfully and `backend/mumbai_co2.db` exists. |
-| CORS error in browser console | Backend must be running on port 8000; CORS is open to all origins in [backend/main.py](backend/main.py). |
-| `npm run dev` port clash | Vite will auto-pick the next free port — read the terminal output. |
+| `JAVA_HOME is not set` | Install JDK 8 / 11 / 17 and set `JAVA_HOME`. |
+| `ModuleNotFoundError: openpyxl` | Ensure `pip install -r requirements.txt` was run inside the activated venv. |
+| API returns 503 "Database not found" | Run the two scripts in §4.3 before starting uvicorn. |
+| Dashboard shows empty chart | Check that `backend/mumbai_co2.db` exists and both `historical_data` and `forecasts` tables are populated. |
+| CORS error in browser console | Backend must be running on port 8000; CORS allows all origins in dev. |
 
 ---
 
-## Contributors
+## 10. Contributors
 
-- **Varun** — [GitHub](https://github.com/)
-- **Shivam Choughule** — [GitHub](https://github.com/ShivamChoughule1)
+- **Varun**
+- **Shivam Choughule** — https://github.com/ShivamChoughule1
 
 Course: **Big Data Analytics**, KJSCE, Semester 2, Mini-Project.
 

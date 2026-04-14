@@ -8,7 +8,7 @@ pandas==2.2.1
 numpy==1.26.4
 statsmodels==0.14.1
 scikit-learn==1.4.1.post1
-matplotlib==3.8.3
+openpyxl==3.1.2
 
 # --- Big Data Processing ---
 pyspark==3.5.1
