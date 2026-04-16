@@ -1,1 +1,191 @@
-/* Tailwind utility classes handle all styling; see App.jsx. */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  background-color: #12181b; /* Darker primary background */
+  color: #fff;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 30px;
+  background-color: #1a2226;
+  border-bottom: 1px solid #2d373c;
+}
+
+.search-bar input {
+  background-color: #12181b;
+  border: 1px solid #37474f;
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 4px;
+  width: 300px;
+}
+
+.main-content {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.control-panel {
+  display: flex;
+  gap: 30px;
+  background-color: #1a2226;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+  border: 1px solid #2d373c;
+}
+
+.control-section label {
+  display: block;
+  font-size: 11px;
+  color: #90a4ae;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.control-section select {
+  background: #12181b;
+  color: #00d4ff;
+  border: 1px solid #37474f;
+  padding: 8px;
+  width: 180px;
+}
+
+.pollutant-checkboxes {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.find-details-btn {
+  background-color: #008ba3;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 20px;
+}
+
+.map-container {
+  background-color: #1a2226;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #2d373c;
+}
+
+.map-placeholder {
+  width: 100%;
+  height: 500px;
+  background-color: #12181b; /* Map inner background */
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #2d373c;
+}
+
+/* The City Shape */
+.mumbai-outline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  position: absolute;
+  cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.8);
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.dot.active {
+  transform: scale(1.6);
+  box-shadow: 0 0 15px currentColor;
+  border: 2px solid white;
+}
+
+.dot.blue { background-color: #00d4ff; color: #00d4ff; }
+.dot.yellow { background-color: #ffeb3b; color: #ffeb3b; }
+.dot.red { background-color: #f44336; color: #f44336; }
+
+.map-tooltip {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 8px 15px;
+  border-radius: 4px;
+  border-left: 3px solid #00d4ff;
+  font-size: 14px;
+}
+
+.co2-legend h3 { font-size: 13px; color: #90a4ae; margin: 15px 0 5px; }
+.co2-legend ul { list-style: none; padding: 0; display: flex; gap: 20px; }
+.co2-legend li { font-size: 12px; display: flex; align-items: center; gap: 8px; }
+
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.current-details, .breakdown, .overall-aqi {
+  background-color: #1a2226;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #2d373c;
+}
+
+table {
+  width: 100%;
+  margin-top: 15px;
+}
+
+th { text-align: left; color: #90a4ae; font-size: 11px; text-transform: uppercase; padding-bottom: 10px; }
+td { padding: 12px 0; border-top: 1px solid #2d373c; font-size: 14px; }
+
+.good { color: #4caf50; }
+.moderate { color: #ffeb3b; }
+.unhealthy { color: #f44336; }
+
+.aqi-gauge-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gauge-text {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+}
+
+.aqi-val { font-size: 36px; font-weight: bold; }
+
+.loading-text { color: #00d4ff; font-style: italic; }

@@ -1,233 +1,206 @@
-import { useEffect, useMemo, useState } from 'react'
-import axios from 'axios'
+import { useEffect, useState, useMemo } from 'react';
+import axios from 'axios';
 import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import './App.css'
+  LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
+import './App.css';
 
-const API_BASE = 'http://127.0.0.1:8000'
-const AREAS = ['Bandra', 'Kurla', 'Colaba', 'Andheri', 'Dadar', 'Mumbai Central']
+const API_BASE = 'http://127.0.0.1:8000';
+const AREAS = ['Bandra', 'Kurla', 'Colaba', 'Andheri', 'Dadar', 'Borivali', 'Worli', 'Juhu'];
 
-function formatTs(ts) {
-  if (!ts) return ''
-  return ts.replace('T', ' ').slice(0, 16)
-}
+const MAP_COORDS = {
+  'Borivali': { top: '15%', left: '40%' },
+  'Andheri': { top: '35%', left: '35%' },
+  'Juhu': { top: '40%', left: '20%' },
+  'Bandra': { top: '50%', left: '25%' },
+  'Kurla': { top: '55%', left: '45%' },
+  'Worli': { top: '65%', left: '20%' },
+  'Dadar': { top: '70%', left: '30%' },
+  'Colaba': { top: '90%', left: '25%' }
+};
 
 export default function App() {
-  const [area, setArea] = useState('Bandra')
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [area, setArea] = useState('Bandra');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedPollutants] = useState(['CO2', 'PM2.5']);
 
   useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setError(null)
-    axios
-      .get(`${API_BASE}/api/forecast/${encodeURIComponent(area)}`)
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    
+    axios.get(`${API_BASE}/api/forecast/${encodeURIComponent(area)}`)
       .then((r) => {
-        if (!cancelled) setData(r.data)
+        if (!cancelled) setData(r.data);
       })
       .catch((e) => {
-        if (!cancelled) setError(e.response?.data?.detail ?? e.message)
+        if (!cancelled) setError(e.response?.data?.detail ?? e.message);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [area])
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [area]);
 
   const chartData = useMemo(() => {
-    if (!data) return []
-    const hist = (data.historical ?? []).map((h) => ({
-      timestamp: h.timestamp,
-      historical: h.co2_level,
-    }))
-    const fc = (data.forecast ?? []).map((f) => ({
-      timestamp: f.forecast_date,
-      forecast: f.predicted_value,
-    }))
-    return [...hist, ...fc]
-  }, [data])
+    if (!data) return [];
+    const hist = (data.historical || []).map(d => ({
+      time: d.timestamp,
+      historical: d.co2_level,
+      forecast: null
+    }));
+    const fore = (data.forecast || []).map(d => ({
+      time: d.forecast_date,
+      historical: null,
+      forecast: d.predicted_value
+    }));
+    return [...hist, ...fore];
+  }, [data]);
 
-  const peak = data?.summary?.peak_next_week
+  const currentCO2 = data?.historical?.length > 0 
+    ? Math.round(data.historical[data.historical.length - 1].co2_level) 
+    : 450;
+  
+  const currentAQI = Math.max(0, Math.round((currentCO2 - 415) / 0.5));
+
+  const getStatus = (val) => {
+    if (val < 400) return { label: 'Good', class: 'good', color: 'blue' };
+    if (val <= 600) return { label: 'Moderate', class: 'moderate', color: 'yellow' };
+    return { label: 'Unhealthy', class: 'unhealthy', color: 'red' };
+  };
 
   return (
-    <div className="min-h-screen flex bg-mumbai-navy text-slate-100">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-800 p-6 flex flex-col gap-6">
-        <div>
-          <h1 className="text-xl font-semibold text-electric-blue">Mumbai CO₂</h1>
-          <p className="text-xs text-slate-400 mt-1">
-            ARIMA(5,1,0) Forecast Dashboard
-          </p>
+    <div className="app">
+      <header className="header">
+        <div className="search-bar">
+          <input type="text" placeholder="Find specific area CO2 and other details..." />
         </div>
-
-        <div>
-          <h2 className="text-xs uppercase tracking-wide text-slate-400 mb-2">
-            Select Area
-          </h2>
-          <ul className="space-y-1">
-            {AREAS.map((a) => (
-              <li key={a}>
-                <button
-                  onClick={() => setArea(a)}
-                  className={`w-full text-left px-3 py-2 rounded transition ${
-                    area === a
-                      ? 'bg-electric-blue/20 text-electric-blue border border-electric-blue/40'
-                      : 'hover:bg-slate-800 text-slate-300'
-                  }`}
-                >
-                  {a}
-                </button>
-              </li>
-            ))}
-          </ul>
+        <div className="user-profile">
+          <span>MUMBAI AIR QUALITY MONITOR</span>
         </div>
+      </header>
 
-        <div className="mt-auto text-[10px] text-slate-500 leading-relaxed">
-          <p>CO₂ derived from AQI via</p>
-          <code className="text-electric-blue">CO₂ = 415 + (AQI × 0.5)</code>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <main className="flex-1 p-8 overflow-auto">
-        <header className="mb-6 flex items-baseline justify-between">
-          <div>
-            <h2 className="text-3xl font-semibold text-white">{area}</h2>
-            <p className="text-sm text-slate-400">
-              Historical (2024–2025) + Forecast (2026)
-            </p>
+      <main className="main-content">
+        <div className="control-panel">
+          <div className="control-section">
+            <label>MUMBAI AREAS</label>
+            <select value={area} onChange={(e) => setArea(e.target.value)}>
+              {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
           </div>
-          {data && (
-            <p className="text-xs text-slate-500">
-              {data.summary.history_points} history · {data.summary.forecast_points} forecast
-            </p>
-          )}
-        </header>
-
-        {/* Summary card */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <SummaryCard
-            label="Predicted Peak (Next 7 Days)"
-            value={peak ? `${peak.predicted_value.toFixed(2)} ppm` : '—'}
-            sub={peak ? formatTs(peak.forecast_date) : ''}
-            accent
-          />
-          <SummaryCard
-            label="Confidence Band @ Peak"
-            value={
-              peak
-                ? `${peak.lower_ci?.toFixed(1) ?? '—'} – ${peak.upper_ci?.toFixed(1) ?? '—'}`
-                : '—'
-            }
-            sub="95% interval"
-          />
-          <SummaryCard
-            label="Model"
-            value="ARIMA(5, 1, 0)"
-            sub="Hourly resolution"
-          />
-        </section>
-
-        {/* Chart */}
-        <section className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
-          <h3 className="text-sm uppercase tracking-wide text-slate-400 mb-3">
-            CO₂ Time-Series
-          </h3>
-
-          {loading && <p className="text-slate-400 text-sm p-8">Loading…</p>}
-          {error && (
-            <p className="text-red-400 text-sm p-8 whitespace-pre-wrap">{error}</p>
-          )}
-
-          {!loading && !error && chartData.length > 0 && (
-            <div style={{ width: '100%', height: 420 }}>
-              <ResponsiveContainer>
-                <LineChart data={chartData}>
-                  <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="timestamp"
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                    tickFormatter={(t) => (t ? t.slice(0, 10) : '')}
-                    minTickGap={60}
-                  />
-                  <YAxis
-                    tick={{ fill: '#94a3b8', fontSize: 11 }}
-                    domain={['auto', 'auto']}
-                    label={{
-                      value: 'CO₂ (ppm)',
-                      angle: -90,
-                      position: 'insideLeft',
-                      fill: '#94a3b8',
-                    }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: '#0f172a',
-                      border: '1px solid #1e293b',
-                      borderRadius: 6,
-                      color: '#e2e8f0',
-                    }}
-                    labelFormatter={(l) => formatTs(l)}
-                  />
-                  <Legend wrapperStyle={{ color: '#94a3b8' }} />
-                  <Line
-                    type="monotone"
-                    dataKey="historical"
-                    name="Historical"
-                    stroke="#94a3b8"
-                    strokeWidth={1.5}
-                    dot={false}
-                    connectNulls
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="forecast"
-                    name="2026 Forecast"
-                    stroke="#00d4ff"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+          <div className="control-section">
+            <label>SELECT POLLUTANT</label>
+            <div className="pollutant-checkboxes">
+              {['CO2', 'PM2.5', 'PM10', 'O3', 'SO2'].map(p => (
+                <label key={p}>
+                  <input type="checkbox" checked={selectedPollutants.includes(p)} readOnly /> {p}
+                </label>
+              ))}
             </div>
-          )}
-        </section>
+          </div>
+          <button className="find-details-btn">FIND DETAILS</button>
+        </div>
+
+        <div className="dashboard-grid">
+          <div className="map-container">
+            <div className="map-placeholder">
+              {/* Stylized SVG Map of Mumbai Coastline */}
+              <svg className="mumbai-outline" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M40,0 L45,10 L42,25 L35,40 L25,55 L20,70 L22,85 L25,100 L0,100 L0,0 Z" fill="#2c3e50" opacity="0.5" />
+              </svg>
+
+              {AREAS.map(a => {
+                // For the selected area, use actual data, for others default to blue/good
+                const dotColor = (a === area) ? getStatus(currentCO2).color : 'blue';
+                return (
+                  <div 
+                    key={a} 
+                    className={`dot ${dotColor} ${area === a ? 'active' : ''}`}
+                    style={{ top: MAP_COORDS[a].top, left: MAP_COORDS[a].left }}
+                    onClick={() => setArea(a)}
+                    title={a}
+                  ></div>
+                );
+              })}
+              
+              <div className="map-tooltip">
+                <p><strong>{area}</strong>: {currentCO2} ppm</p>
+              </div>
+            </div>
+
+            <div className="co2-legend">
+              <h3>CO2 (ppm):</h3>
+              <ul>
+                <li><span className="dot blue"></span> Good (&lt;400)</li>
+                <li><span className="dot yellow"></span> Moderate (400-600)</li>
+                <li><span className="dot red"></span> Unhealthy (&gt;600)</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="right-panel">
+            <div className="current-details">
+              <h3>CURRENT DETAILS: {area}</h3>
+              {loading ? <p className="loading-text">Loading AI Analysis...</p> : (
+                <table>
+                  <thead>
+                    <tr><th>Pollutant</th><th>Value</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>CO2</td>
+                      <td className={getStatus(currentCO2).class}>{currentCO2} ppm</td>
+                      <td className={getStatus(currentCO2).class}>{getStatus(currentCO2).label}</td>
+                    </tr>
+                    <tr>
+                      <td>AQI</td>
+                      <td>{currentAQI}</td>
+                      <td>-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="breakdown">
+                <h3>ARIMA Forecast Model (2026)</h3>
+                <div className="chart-container" style={{height: '150px', width: '100%'}}>
+                  <ResponsiveContainer>
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#444" vertical={false} />
+                      <Line type="monotone" dataKey="forecast" stroke="#00d4ff" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="overall-aqi">
+              <h3>Mumbai Overall AQI</h3>
+              <div className="aqi-gauge-wrapper">
+                <ResponsiveContainer width="100%" height={120}>
+                  <PieChart>
+                    <Pie
+                      data={[{v:1},{v:1},{v:1}]}
+                      innerRadius={55} outerRadius={75}
+                      startAngle={180} endAngle={0}
+                      dataKey="v" stroke="none"
+                    >
+                      <Cell fill="#4caf50" /><Cell fill="#ffeb3b" /><Cell fill="#f44336" />
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="gauge-text">
+                  <span className="aqi-val">{currentAQI}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
-  )
-}
-
-function SummaryCard({ label, value, sub, accent }) {
-  return (
-    <div
-      className={`rounded-lg p-5 border ${
-        accent
-          ? 'bg-electric-blue/5 border-electric-blue/40'
-          : 'bg-slate-900/60 border-slate-800'
-      }`}
-    >
-      <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
-      <p
-        className={`text-2xl font-semibold mt-1 ${
-          accent ? 'text-electric-blue' : 'text-white'
-        }`}
-      >
-        {value}
-      </p>
-      {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
-    </div>
-  )
+  );
 }
