@@ -1,6 +1,6 @@
 # Mumbai CO₂ Prediction
 
-End-to-end Big Data Analytics project that ingests hourly AQI observations for Mumbai (Jan 2024 – Dec 2025), derives CO₂ via the urban proxy formula, forecasts Jan–Mar 2026 with **ARIMA(5, 1, 0)**, and serves the results through a **FastAPI** backend and a **React + Tailwind + Recharts** dashboard.
+End-to-end Big Data Analytics project that ingests hourly AQI observations for Mumbai (Jan 2024 – Dec 2025), derives CO₂ via the urban proxy formula, forecasts Jan–Mar 2026 with **ARIMA(5, 1, 5)**, and serves the results through a **FastAPI** backend and a **React + Tailwind + Recharts** dashboard.
 
 Built for **Big Data Analytics (BDA)** — KJSCE, Semester 2.
 
@@ -42,7 +42,7 @@ Mumbai-CO2-Prediction/
 │   ├── spark_cleaner.py          # Step 2 — PySpark ETL
 │   └── schema.sql                # Step 1 — SQLite schema
 ├── notebooks/
-│   └── arima_research.py         # Step 3 — ARIMA(5,1,0) + forecast
+│   └── arima_research.py         # Step 3 — ARIMA(5,1,5) + forecast
 ├── backend/
 │   ├── main.py                   # Step 4 — FastAPI server
 │   ├── database.py
@@ -94,7 +94,7 @@ cd ..
 # 1. PySpark ETL: unpivot XLSX → historical_data
 python big_data_processing/spark_cleaner.py
 
-# 2. Train ARIMA(5,1,0) and populate the forecasts table
+# 2. Train ARIMA(5,1,5) and populate the forecasts table
 python notebooks/arima_research.py
 ```
 

@@ -3,7 +3,7 @@ Mumbai CO2 Prediction — ARIMA Forecasting (Step 3)
 ==================================================
 
 Loads the cleaned hourly CO2 series from the SQLite `historical_data` table
-(populated by big_data_processing/spark_cleaner.py), fits an ARIMA(5,1,0)
+(populated by big_data_processing/data_cleaner.py), fits an ARIMA(5,1,5)
 model, forecasts the next 2200 hours (~Jan – Mar 2026), and persists the
 predictions — along with 95% confidence bounds — into the `forecasts`
 table of the same database.
@@ -29,7 +29,8 @@ warnings.filterwarnings("ignore")
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.normpath(os.path.join(SCRIPT_DIR, "..", "backend", "mumbai_co2.db"))
 
-ARIMA_ORDER = (5, 1, 0)
+ARIMA_ORDER = (5, 1, 5)   # Selected empirically — see notebooks/arima_order_search.py
+                          # Lowest AIC (11,881.8) across a grid of (p, d, q) with q >= 2.
 FORECAST_STEPS = 2200                       # ~Jan 01 2026 -> early Apr 2026
 AREAS = ["Bandra", "Kurla", "Colaba", "Andheri", "Dadar", "Mumbai Central"]
 

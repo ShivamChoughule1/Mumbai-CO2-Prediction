@@ -330,16 +330,17 @@ button {
 
 .map-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   min-height: 0;
   padding: 8px;
 }
 
 .map-stage {
   position: relative;
-  width: 100%;
-  overflow: hidden;
+  width: min(100%, calc((100vh - 240px) * (1192 / 824)));
   aspect-ratio: 1192 / 824;
+  overflow: hidden;
   border-radius: 8px;
   border: 1px solid rgba(143, 183, 206, 0.16);
   background: #2b5d74;
@@ -374,7 +375,9 @@ button {
   z-index: 2;
   width: 26px;
   height: 26px;
-  margin: -13px 0 0 -13px;
+  /* Anchor the dot's bottom-center to (top, left), with a 6px gap, so the
+     map label stays visible directly below the dot. */
+  transform: translate(-50%, calc(-100% - 6px));
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -433,7 +436,7 @@ button {
 
 .map-pin:hover,
 .map-pin.active {
-  transform: scale(1.08);
+  transform: translate(-50%, calc(-100% - 6px)) scale(1.08);
 }
 
 .map-pin.active::before {
@@ -452,7 +455,7 @@ button {
   z-index: 3;
   min-width: 126px;
   padding: 8px 11px;
-  transform: translate(14px, -10px);
+  transform: translate(14px, -32px);
   border-radius: 6px;
   background: rgba(27, 38, 49, 0.96);
   border: 1px solid rgba(86, 107, 122, 0.34);

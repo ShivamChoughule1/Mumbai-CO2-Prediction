@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_historical_area_time
 
 -- ---------------------------------------------------------------------
 -- forecasts
--- ARIMA(5,1,0) predictions for Jan–Mar 2026 (and beyond).
+-- ARIMA(5,1,5) predictions for Jan–Mar 2026 (and beyond).
 -- One row per area per forecast hour, with 95% confidence bounds.
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS forecasts (
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS forecasts (
     predicted_value  REAL     NOT NULL,
     lower_ci         REAL,
     upper_ci         REAL,
-    model_name       TEXT     DEFAULT 'ARIMA(5,1,0)',
+    model_name       TEXT     DEFAULT 'ARIMA(5,1,5)',
     created_at       DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

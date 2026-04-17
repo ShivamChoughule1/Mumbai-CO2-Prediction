@@ -16,15 +16,18 @@ const POLLUTANTS = [
 
 const DEFAULT_SELECTED_POLLUTANTS = ['CO2', 'PM2.5', 'PM10', 'O3', 'SO2'];
 
+// Coordinates target the top-center of each area label on the map image.
+// The pin's bottom sits 6px above this point (see .map-pin transform in App.css),
+// so the neighbourhood name stays visible directly below each dot.
 const AREA_POSITIONS = {
-  Juhu: { top: '27.4%', left: '26.8%' },
-  Andheri: { top: '16.6%', left: '42.6%' },
-  Bandra: { top: '40.2%', left: '30.3%' },
-  Dadar: { top: '49.0%', left: '38.0%' },
-  'Mumbai Central': { top: '44.3%', left: '34.8%' },
-  Worli: { top: '62.2%', left: '34.1%' },
-  Kurla: { top: '40.1%', left: '50.8%' },
-  Colaba: { top: '79.3%', left: '30.6%' },
+  Andheri:          { top: '17%', left: '44%' },
+  Juhu:             { top: '26%', left: '33%' },
+  Bandra:           { top: '39%', left: '33%' },
+  Kurla:            { top: '42%', left: '52%' },
+  'Mumbai Central': { top: '45%', left: '39%' },
+  Dadar:            { top: '50%', left: '36%' },
+  Worli:            { top: '63%', left: '36%' },
+  Colaba:           { top: '73%', left: '30%' },
 };
 
 const AREA_SEEDS = {
