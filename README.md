@@ -7,7 +7,7 @@ Built for **Big Data Analytics (BDA)** — KJSCE, Semester 2.
 
 # Commands to run the project
 
-Step 1:  Extract the file Mumbai-CO2-Prediction from Code folder and open it in any code editor
+Step 1:  Extract the file MiniProject16030725004 and open Code>>Mumbai-CO2-Prediction in any code editor
 
 Step 2: Open a New Terminal(Terminal 1 for backend) and run these commands
           venv\Scripts\activate
