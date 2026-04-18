@@ -116,7 +116,7 @@ cd ..
 
 ```bash
 # 1. PySpark ETL: unpivot XLSX → historical_data
-python big_data_processing/spark_cleaner.py
+python big_data_processing/data_cleaner.py
 
 # 2. Train ARIMA(5,1,5) and populate the forecasts table
 python notebooks/arima_research.py
