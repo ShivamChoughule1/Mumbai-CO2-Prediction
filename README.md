@@ -4,6 +4,30 @@ End-to-end Big Data Analytics project that ingests hourly AQI observations for M
 
 Built for **Big Data Analytics (BDA)** — KJSCE, Semester 2.
 
+
+# Commands to run the project
+
+Step 1:  Extract the file Mumbai-CO2-Prediction from Code folder and open it in any code editor
+
+Step 2: Open a New Terminal(Terminal 1 for backend) and run these commands
+          venv\Scripts\activate
+          pip install -r requirements.txt
+          (data training commands)
+          python big_data_processing/data_cleaner.py
+          python notebooks/arima_research.py
+          python notebooks/arima_order_search.py
+          (backend server starting commands)
+          cd backend
+          uvicorn main:app --reload
+
+Step 3: Open a New terminal(Terminal 2 for frontend) and run these commands
+          venv\Scripts\activate
+          cd frontend
+          npm install
+          npm run dev
+
+          frontend will run on  Local:   http://localhost:5173/
+
 ---
 
 ## 1. Architecture
